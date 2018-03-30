@@ -84,7 +84,7 @@ plotTheData(t,af4), title('COM')
 end
 
 %%
-
+% for post-process: switch to removing offset within fourier space
 function newDat = subtractOffset(oldDat, window)
 global ADC
 assert(~any(isnan(oldDat(:))))
