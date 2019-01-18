@@ -15,11 +15,12 @@
 #include <SD.h>\
 #include <TimerThree.h>\
 \
-#define _READFREQ_ (1000000/400) // period between interrupts in microseconds, <10000 for 100Hz\
+#define _READFREQ_ (400) // in Hz. Max is probably around 8000
+#define _READTIME_ (1000000/_READTIME_) // period between interrupts in microseconds
 #define DEBUG 0\
 #define numSensors 4\
-#define numValues 500 // how many values read until writing expected to be near 3 for _READFREQ_=50000\
-#define A2D_RESOLUTION 10    //resolution of analog to digital converter for inputs\
+#define numValues 500        // amount values in buffer. Teensy 3.2 has 16KB RAM so 16/4KB=4KB=1024 element buffer max
+#define A2D_RESOLUTION 10    // resolution of ADC. At +/- 200g at 10 bits = 0.4 is best resolution\
 \
 unsigned char pinX[numSensors] = \{A2, A5, A8, A11\};\
 unsigned char pinY[numSensors] = \{A1, A4, A7, A10\};\
@@ -30,12 +31,12 @@ int datay[numSensors][numValues] = \{0\};\
 int dataz[numSensors][numValues] = \{0\};\
 long unsigned int readTime[numValues] = \{0\}; \
 const int chipSelect = 10; // SD card pin\
-volatile int valueCt = 0;  // which value is to be read into next, voltatile because value changes in interrupt (value of data arrays do not change in interrupt, technically)\
+volatile int valueCt = 0;  // where next accel data read into. voltatile because changes during interrupt (prob not needed for arrays)\
 \
 \
 void setup() \
 \{\
-  pinMode(13, OUTPUT);  \
+  pinMode(13, OUTPUT);  // startup blink sequence\
   blinkSeq();\
   blinkSeq();\
   \
@@ -48,7 +49,7 @@ void setup() \
 //    Serial.println("Card failed, or not present");\
     // don't do anything more:\
     while(1)\{\
-      blinkSeq();\
+      blinkSeq(); // constant blinking = problem\
       delay(1000);\
     \}\
     return;\
@@ -63,12 +64,12 @@ void setup() \
 //    pinMode(pinZ[i], INPUT);\
 //  \}\
   \
-  Timer3.initialize(_READFREQ_);\
+  Timer3.initialize(_READTIME_);\
   Timer3.attachInterrupt(readSensors);\
   digitalWrite(13, LOW);\
   analogReadResolution(A2D_RESOLUTION);    //set resolution\
 \
-  SD.remove("DATA.TXT"); // don't append, we want to replace\
+  SD.remove("DATA.TXT"); // delete old file on startup\
 \}\
 \
 void loop() \
@@ -98,7 +99,7 @@ void writeToSD(char* fileName)\
     for(int j = 0; j < numValues;  j++)\{\
       //Serial.print(readTime[j]);   //PRINT TIME\
       //Serial.print(",");        //comma delimeter\
-      for(int i = 1; i < 2; i++)\{//print strain gauge data that is stored\
+      for(int i = 1; i < 2; i++)\{//print first two accel data from buffer to Serial\
         Serial.print(datax[i][j]);\
         Serial.print(",");        //comma delimeter\
         Serial.print(datay[i][j]);\
@@ -117,7 +118,7 @@ void writeToSD(char* fileName)\
         dataFile.print(readTime[j]);  \
         dataFile.print(",");        //comma delimeter\
       \
-        for(int i = 0; i < numSensors; i++)\{//print strain gauge data that is stored\
+        for(int i = 0; i < numSensors; i++)\{//print first two accel data from buffer to SD\
           dataFile.print(datax[i][j]);\
           dataFile.print(",");        //comma delimeter\
           dataFile.print(datay[i][j]);\
@@ -155,8 +156,8 @@ void readSensors()\
 void blinkSeq()\
 \{\
   digitalWrite(13, HIGH); delay(250);\
-  digitalWrite(13, LOW); delay(500);\
+  digitalWrite(13, LOW ); delay(500);\
   digitalWrite(13, HIGH); delay(250);\
-  digitalWrite(13, LOW); delay(500);\
+  digitalWrite(13, LOW ); delay(500);\
 \}\
 }
