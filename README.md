@@ -6,11 +6,11 @@ Relevant information, files, and code for the use of the testing rig designed by
 > *delta-V: the speed gained by impacted vehicle after collision, i.e. normalized impulse
 
 Items contained in this repository
-- [x] Test Code
+- [x] Code for Experiment
 	- [x] Arduino
 	- [x] Matlab
-- [ ] Post-Processing
-	- [ ] Filtering
-	- [ ] Plotting
+- [x] Post-Processing
+	- [x] Filtering
+	- [x] Plotting
 - [ ] Dynamic Model
 	- [ ] MADYMO
